@@ -1,8 +1,10 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo import ASCENDING
 import os
+from dotenv import load_dotenv
 
-MONGO_URL = "mongodb+srv://musthaq_ahmed_gaffoor:RLlJ448PCvs1dNZ6@cluster0.jyog6xr.mongodb.net/?appName=Cluster0"
+load_dotenv()
+MONGO_URL = os.getenv("MONGO_URL")
 
 client = AsyncIOMotorClient(MONGO_URL)
 
