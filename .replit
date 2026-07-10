@@ -1,5 +1,6 @@
 [nix]
 channel = "stable-23.11"
+packages = ["python312" "python312Packages.fastapi" "python312Packages.uvicorn" "python312Packages.motor" "python312Packages.pymongo" "python312Packages.python-dotenv"]
 [deployment]
 run = "cd backend && uvicorn app.main:app --host 0.0.0.0 --port 5000"
 [agent]
