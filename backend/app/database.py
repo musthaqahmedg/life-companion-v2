@@ -29,3 +29,16 @@ async def get_entries(user_id):
     db, collection = await get_connection()
     entries = await collection.find({"user_id": user_id}).to_list(None)
     return entries
+
+
+async def save_user(user_data):
+    db, collection = await get_connection()
+    users_collection = db.users
+    result = await users_collection.insert_one(user_data)
+    return str(result.inserted_id)
+
+async def get_user_by_email(email: str):
+    db, collection = await get_connection()
+    users_collection = db.users
+    user = await users_collection.find_one({"email": email})
+    return user
