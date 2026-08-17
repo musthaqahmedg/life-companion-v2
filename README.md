@@ -2,6 +2,14 @@
 
 A personal life operating system API built with FastAPI, Python, and MongoDB.
 
+## 🚀 LIVE API
+
+**API is now deployed and live!**
+
+- **Live URL:** https://web-production-411ab.up.railway.app/
+- **API Docs:** https://web-production-411ab.up.railway.app/docs
+- **Status:** Active ✅
+
 ## What It Does
 
 Captures daily life data and provides AI insights through REST API endpoints. Data is **permanently stored** in MongoDB Atlas cloud database.
@@ -79,7 +87,7 @@ Response:
 
 ## How to Test
 
-1. Go to: `https://YOUR-CODESPACE-URL/docs`
+1. Go to: `https://web-production-411ab.up.railway.app/docs`
 2. Try the endpoints:
    - **GET /health** - Test if API is alive
    - **POST /api/entries** - Save a daily entry to MongoDB
