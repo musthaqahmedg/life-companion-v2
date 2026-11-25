@@ -1,5 +1,6 @@
 from app.models import DailyEntry
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import save_entry, get_entries
 from app.models import User, UserResponse
 from app.auth import hash_password, create_access_token
@@ -7,6 +8,7 @@ from app.database import save_user, get_user_by_email
 from app.auth import hash_password, verify_password, create_access_token
 from app.auth import hash_password, verify_password, create_access_token, create_refresh_token
 app = FastAPI()
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 @app.get("/")
 async def root():
