@@ -1,6 +1,6 @@
-# Life Companion API
+# Life Companion
 
-A personal life operating system API built with FastAPI, Python, and MongoDB.
+A personal life operating system: a FastAPI + MongoDB backend with JWT authentication, and a React (Vite) frontend.
 
 ## 🚀 LIVE API
 
@@ -24,6 +24,9 @@ Captures daily life data and provides AI insights through REST API endpoints. Da
 ✅ Auto-documentation with Swagger UI  
 ✅ Fast async API with FastAPI  
 ✅ Async database driver (Motor)  
+✅ **User signup and login with JWT access and refresh tokens**  
+✅ **Passwords hashed with bcrypt**  
+✅ **React frontend with Login and Signup pages**  
 
 ## Endpoints
 
@@ -85,6 +88,35 @@ Response:
 }
 ```
 
+### 5. Sign Up
+
+POST /api/auth/signup
+
+Request body:
+```json
+{
+  "email": "test@example.com",
+  "password": "your-password"
+}
+```
+
+Response:
+```json
+{
+  "message": "User created successfully",
+  "user_id": "...",
+  "access_token": "...",
+  "token_type": "bearer",
+  "refresh_token": "..."
+}
+```
+
+### 6. Log In
+
+POST /api/auth/login
+
+Same request body as signup. Returns `"message": "Login successful"` with a new access token and refresh token.
+
 ## How to Test
 
 1. Go to: `https://web-production-411ab.up.railway.app/docs`
@@ -98,6 +130,14 @@ Response:
 **Backend Framework**
 - FastAPI (Python web framework)
 - Uvicorn (ASGI server)
+
+**Frontend**
+- React 19
+- Vite
+
+**Authentication**
+- PyJWT (access and refresh tokens)
+- bcrypt (password hashing)
 
 **Data & Validation**
 - Pydantic (Type validation)
@@ -136,7 +176,16 @@ MongoDB Atlas (Cloud)
 - Implemented retrieve endpoint
 - Data persistence working!
 
-**Phase 3: N8N Automation** (Coming)
+**Phase 3: JWT Auth + React Frontend** (In progress)
+- Signup and login endpoints with JWT access and refresh tokens ✅
+- Passwords hashed with bcrypt ✅
+- CORS enabled so the browser can call the API ✅
+- React (Vite) frontend with Login and Signup pages ✅
+- Signup and login tested end to end ✅
+- Save the token in the browser after login (in progress)
+- Deploy the frontend and connect it to the Railway backend
+
+**Phase 3b: N8N Automation** (Coming)
 - Workflow automation
 - Scheduled tasks
 - Data enrichment
@@ -170,19 +219,41 @@ uvicorn app.main:app --reload
 # Docs at http://127.0.0.1:8000/docs
 ```
 
+Frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The API URL is currently set inside `frontend/src/components/Login.jsx` and `Signup.jsx`. Change it to point at your backend.
+
 ## Environment Variables
 
 Create a `.env` file in `backend/` (not in version control):
 
+```
 MONGO_URL=mongodb+srv://username:password@cluster.mongodb.net/?appName=Cluster0
+SECRET_KEY=a-long-random-string-for-signing-jwts
+```
 
 ## File Structure
 
+```
 backend/
 └── app/
-├── main.py (FastAPI app + endpoints)
-├── models.py (Pydantic data models)
-└── database.py (MongoDB connection)
+    ├── main.py       (FastAPI app, endpoints, CORS)
+    ├── auth.py       (password hashing + JWT tokens)
+    ├── models.py     (Pydantic data models)
+    └── database.py   (MongoDB connection)
+frontend/
+└── src/
+    ├── App.jsx       (switches between Login and Signup)
+    └── components/
+        ├── Login.jsx
+        └── Signup.jsx
+```
 
 ## Author
 
@@ -198,5 +269,5 @@ MIT
 
 ---
 
-**Building in public. Follow along for Phase 3!**
+**Building in public. Phase 3 (auth + frontend) is in progress.**
 
