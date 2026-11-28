@@ -1,5 +1,8 @@
 import { useState } from 'react'
 
+// Backend address. Set VITE_API_URL in Vercel (or in frontend/.env for local dev).
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 function Signup({ onSwitchToLogin }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -10,7 +13,7 @@ function Signup({ onSwitchToLogin }) {
     setError('')
 
     try {
-      const response = await fetch('https://urban-yodel-pp5w9pgrwqx37q4r-8000.app.github.dev/api/auth/signup', {
+      const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
