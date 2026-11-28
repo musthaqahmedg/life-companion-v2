@@ -2,13 +2,12 @@
 
 A personal life operating system: a FastAPI + MongoDB backend with JWT authentication, and a React (Vite) frontend.
 
-## 🚀 LIVE API
+## 🚀 Live App
 
-**API is now deployed and live!**
-
-- **Live URL:** https://web-production-411ab.up.railway.app/
-- **API Docs:** https://web-production-411ab.up.railway.app/docs
-- **Status:** Active ✅
+- **Web app:** https://life-companion-web.vercel.app
+- **API:** https://life-companion-api.vercel.app
+- **API Docs:** https://life-companion-api.vercel.app/docs
+- **Hosting:** Vercel (frontend and backend), MongoDB Atlas (database)
 
 ## What It Does
 
@@ -119,7 +118,7 @@ Same request body as signup. Returns `"message": "Login successful"` with a new 
 
 ## How to Test
 
-1. Go to: `https://web-production-411ab.up.railway.app/docs`
+1. Go to: `https://life-companion-api.vercel.app/docs`
 2. Try the endpoints:
    - **GET /health** - Test if API is alive
    - **POST /api/entries** - Save a daily entry to MongoDB
@@ -148,6 +147,7 @@ Same request body as signup. Returns `"message": "Login successful"` with a new 
 - Pymongo (MongoDB Python driver)
 
 **Infrastructure**
+- Vercel (hosting for frontend and backend)
 - GitHub Codespaces (Cloud IDE)
 - GitHub (Version control)
 
@@ -176,14 +176,14 @@ MongoDB Atlas (Cloud)
 - Implemented retrieve endpoint
 - Data persistence working!
 
-**Phase 3: JWT Auth + React Frontend** (In progress)
+**Phase 3: JWT Auth + React Frontend** ✅
 - Signup and login endpoints with JWT access and refresh tokens ✅
 - Passwords hashed with bcrypt ✅
 - CORS enabled so the browser can call the API ✅
 - React (Vite) frontend with Login and Signup pages ✅
 - Signup and login tested end to end ✅
-- Save the token in the browser after login (in progress)
-- Deploy the frontend and connect it to the Railway backend
+- Token saved in the browser after login ✅
+- Frontend and backend deployed on Vercel ✅
 
 **Phase 3b: N8N Automation** (Coming)
 - Workflow automation
@@ -227,7 +227,7 @@ npm install
 npm run dev
 ```
 
-The API URL is currently set inside `frontend/src/components/Login.jsx` and `Signup.jsx`. Change it to point at your backend.
+The frontend reads the backend address from `VITE_API_URL`. For local development, create `frontend/.env` with `VITE_API_URL=http://localhost:8000` (this is also the default).
 
 ## Environment Variables
 
@@ -269,5 +269,5 @@ MIT
 
 ---
 
-**Building in public. Phase 3 (auth + frontend) is in progress.**
+**Building in public. Phase 3 (auth + frontend) is live!**
 
