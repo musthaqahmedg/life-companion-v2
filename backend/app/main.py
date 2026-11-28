@@ -1,87 +1,111 @@
-from app.models import DailyEntry
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import save_entry, get_entries
-from app.models import User, UserResponse
-from app.auth import hash_password, create_access_token
-from app.database import save_user, get_user_by_email
-from app.auth import hash_password, verify_password, create_access_token
-from app.auth import hash_password, verify_password, create_access_token, create_refresh_token
-app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+from app.auth import (
+    create_access_token,
+    create_refresh_token,
+    current_user,
+    decode_token,
+    hash_password,
+    verify_password,
+)
+from app.database import (
+    delete_entry,
+    get_user_by_email,
+    list_entries,
+    save_user,
+    upsert_entry,
+)
+from app.insights import compute_stats, generate_insight
+from app.models import EntryIn, RefreshRequest, User
+
+app = FastAPI(title="Life Companion API", version="2.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+def _tokens(email: str, user_id: str, message: str) -> dict:
+    return {
+        "message": message,
+        "user_id": user_id,
+        "email": email,
+        "access_token": create_access_token(email),
+        "refresh_token": create_refresh_token(email),
+        "token_type": "bearer",
+    }
+
 
 @app.get("/")
 async def root():
-    return {"message": "Life Companion API", "version": "1.0", "docs": "/docs"}
+    return {"message": "Life Companion API", "version": "2.0", "docs": "/docs"}
+
 
 @app.get("/health")
 async def health():
     return {"status": "ok"}
 
-@app.post("/api/entries")
-async def create_entry(entry: DailyEntry):
-    entry_data = entry.dict()
-    entry_id = await save_entry(entry_data)
-    return {"message": "Entry created successfully!", "entry_id": entry_id}
 
+# ---------- auth ----------
 
-@app.get("/api/entries/{user_id}")
-async def get_user_entries(user_id: str):
-    entries = await get_entries(user_id)
-    # Convert ObjectId to string for JSON serialization
-    for entry in entries:
-        entry["_id"] = str(entry["_id"])
-    return {"user_id": user_id, "entries": entries}
-
-
-@app.post("/api/auth/signup")
+@app.post("/api/auth/signup", status_code=status.HTTP_201_CREATED)
 async def signup(user: User):
-    # Check if user already exists
-    existing_user = await get_user_by_email(user.email)
-    if existing_user:
-        return {"error": "Email already registered"}
-    
-    # Hash password
-    hashed_password = hash_password(user.password)
-    
-    # Save user to database
-    user_data = {
-        "email": user.email,
-        "password": hashed_password
-    }
-    user_id = await save_user(user_data)
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": user.email})
-    refresh_token = create_refresh_token(data={"sub": user.email})  
-    
-    return {
-        "message": "User created successfully",
-        "user_id": user_id,
-        "access_token": access_token,
-        "token_type": "bearer",
-        "refresh_token": refresh_token
-    }
+    email = user.email.strip().lower()
+    if await get_user_by_email(email):
+        raise HTTPException(status.HTTP_409_CONFLICT, "Email already registered")
+    user_id = await save_user({"email": email, "password": hash_password(user.password)})
+    return _tokens(email, user_id, "User created successfully")
+
 
 @app.post("/api/auth/login")
 async def login(user: User):
-    # Find user by email
-    existing_user = await get_user_by_email(user.email)
-    if not existing_user:
-        return {"error": "Invalid email or password"}
-    
-    # Verify password
-    if not verify_password(user.password, existing_user["password"]):
-        return {"error": "Invalid email or password"}
-    
-    # Create access token
-    access_token = create_access_token(data={"sub": user.email})
-    refresh_token = create_refresh_token(data={"sub": user.email})
-    
-    return {
-    "message": "Login successful",
-    "user_id": str(existing_user["_id"]),
-    "access_token": access_token,
-    "token_type": "bearer",
-    "refresh_token": refresh_token
-}
+    email = user.email.strip().lower()
+    existing = await get_user_by_email(email)
+    if not existing or not verify_password(user.password, existing["password"]):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    return _tokens(email, str(existing["_id"]), "Login successful")
+
+
+@app.post("/api/auth/refresh")
+async def refresh(body: RefreshRequest):
+    email = decode_token(body.refresh_token, "refresh")
+    return {"access_token": create_access_token(email), "token_type": "bearer"}
+
+
+@app.get("/api/me")
+async def me(email: str = Depends(current_user)):
+    return {"email": email}
+
+
+# ---------- daily check-ins (always scoped to the logged-in user) ----------
+
+@app.get("/api/entries")
+async def get_my_entries(limit: int = 60, email: str = Depends(current_user)):
+    entries = await list_entries(email, limit=max(1, min(limit, 365)))
+    return {"entries": entries, "stats": compute_stats(entries)}
+
+
+@app.post("/api/entries")
+async def save_my_entry(entry: EntryIn, email: str = Depends(current_user)):
+    data = entry.model_dump()
+    data["date"] = entry.date.isoformat()
+    saved = await upsert_entry(email, data)
+    return {"message": "Check-in saved", "entry": saved}
+
+
+@app.delete("/api/entries/{date}")
+async def delete_my_entry(date: str, email: str = Depends(current_user)):
+    if not await delete_entry(email, date):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No check-in for that date")
+    return {"message": "Check-in deleted"}
+
+
+# ---------- AI insights ----------
+
+@app.post("/api/insights")
+async def insights(email: str = Depends(current_user)):
+    entries = await list_entries(email, limit=14)
+    return await generate_insight(entries)

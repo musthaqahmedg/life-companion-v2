@@ -2,13 +2,12 @@
 
 A personal life operating system: a FastAPI + MongoDB backend with JWT authentication, and a React (Vite) frontend.
 
-## 🚀 LIVE API
+## 🚀 Live App
 
-**API is now deployed and live!**
-
-- **Live URL:** https://web-production-411ab.up.railway.app/
-- **API Docs:** https://web-production-411ab.up.railway.app/docs
-- **Status:** Active ✅
+- **Web app:** https://life-companion-web.vercel.app
+- **API:** https://life-companion-api.vercel.app
+- **API Docs:** https://life-companion-api.vercel.app/docs
+- **Hosting:** Vercel (frontend and backend), MongoDB Atlas (database)
 
 ## What It Does
 
@@ -16,150 +15,71 @@ Captures daily life data and provides AI insights through REST API endpoints. Da
 
 ## Features
 
-✅ Health check endpoint  
-✅ Daily entry creation with validation  
-✅ **Data persistence with MongoDB**  
-✅ **Retrieve entries by user**  
-✅ Data validation using Pydantic  
-✅ Auto-documentation with Swagger UI  
-✅ Fast async API with FastAPI  
-✅ Async database driver (Motor)  
-✅ **User signup and login with JWT access and refresh tokens**  
-✅ **Passwords hashed with bcrypt**  
-✅ **React frontend with Login and Signup pages**  
+✅ Daily check-in: mood (1–10), sleep, exercise and notes, one per day (editable)  
+✅ Mood ribbon: the last four weeks at a glance, coloured from low to high mood  
+✅ **AI reflection powered by Claude**, with a built-in fallback when no API key is set  
+✅ Signup and login with JWT access and refresh tokens (auto-refresh in the browser)  
+✅ Every entry is private to the logged-in user  
+✅ Passwords hashed with bcrypt  
+✅ Responsive React UI, keyboard accessible, no pop-ups  
+✅ Backend test suite (pytest, in-memory MongoDB)
 
 ## Endpoints
 
-### 1. Root Endpoint
+All `/api/entries` and `/api/insights` routes need `Authorization: Bearer <access_token>`.
 
-GET /
+| Method | Path | What it does |
+|---|---|---|
+| GET | `/health` | Health check |
+| POST | `/api/auth/signup` | Create an account, returns access and refresh tokens |
+| POST | `/api/auth/login` | Log in, returns access and refresh tokens |
+| POST | `/api/auth/refresh` | Swap a refresh token for a new access token |
+| GET | `/api/me` | The logged-in user's email |
+| GET | `/api/entries` | Your check-ins (newest first) plus summary stats |
+| POST | `/api/entries` | Save a check-in; the same date again updates it |
+| DELETE | `/api/entries/{date}` | Delete the check-in for a date (`YYYY-MM-DD`) |
+| POST | `/api/insights` | AI reflection on your last 14 check-ins |
 
-Returns API info and docs link
-
-### 2. Health Check
-
-GET /health
-
-Returns: `{"status":"ok"}`
-
-### 3. Create Daily Entry (Save to MongoDB)
-
-POST /api/entries
-
-Request body:
+Example check-in:
 ```json
-{
-  "user_id": "user123",
-  "mood_score": 7,
-  "sleep_hours": 7.5,
-  "exercise_minutes": 30,
-  "notes": "Great day!"
-}
+{ "date": "2026-11-28", "mood_score": 7, "sleep_hours": 7.5, "exercise_minutes": 25, "notes": "Walk by the canal" }
 ```
 
-Response:
-```json
-{
-  "message": "Entry created successfully!",
-  "entry_id": "6a480696db1de8ed86675774"
-}
+Full interactive docs: https://life-companion-api.vercel.app/docs
+
+## Running the tests
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest -q
 ```
 
-### 4. Retrieve Entries by User (Get from MongoDB)
-
-GET /api/entries/{user_id}
-
-Example: `GET /api/entries/user123`
-
-Response:
-```json
-{
-  "user_id": "user123",
-  "entries": [
-    {
-      "_id": "6a480696db1de8ed86675774",
-      "user_id": "user123",
-      "mood_score": 7,
-      "sleep_hours": 7.5,
-      "exercise_minutes": 30,
-      "notes": "Great day!"
-    }
-  ]
-}
-```
-
-### 5. Sign Up
-
-POST /api/auth/signup
-
-Request body:
-```json
-{
-  "email": "test@example.com",
-  "password": "your-password"
-}
-```
-
-Response:
-```json
-{
-  "message": "User created successfully",
-  "user_id": "...",
-  "access_token": "...",
-  "token_type": "bearer",
-  "refresh_token": "..."
-}
-```
-
-### 6. Log In
-
-POST /api/auth/login
-
-Same request body as signup. Returns `"message": "Login successful"` with a new access token and refresh token.
-
-## How to Test
-
-1. Go to: `https://web-production-411ab.up.railway.app/docs`
-2. Try the endpoints:
-   - **GET /health** - Test if API is alive
-   - **POST /api/entries** - Save a daily entry to MongoDB
-   - **GET /api/entries/{user_id}** - Retrieve entries for a user
+The tests use an in-memory MongoDB, so they need no database or API key.
 
 ## Tech Stack
 
-**Backend Framework**
-- FastAPI (Python web framework)
-- Uvicorn (ASGI server)
+**Frontend:** React 19, Vite, plain CSS (Bricolage Grotesque + Atkinson Hyperlegible)
 
-**Frontend**
-- React 19
-- Vite
+**Backend:** FastAPI, Pydantic v2, Uvicorn, Motor (async MongoDB driver)
 
-**Authentication**
-- PyJWT (access and refresh tokens)
-- bcrypt (password hashing)
+**AI:** Anthropic Claude API (`claude-haiku-5-5` by default) for weekly reflections
 
-**Data & Validation**
-- Pydantic (Type validation)
-- Motor (Async MongoDB driver)
+**Auth:** PyJWT (access + refresh tokens), bcrypt
 
-**Database**
-- MongoDB Atlas (Cloud database)
-- Pymongo (MongoDB Python driver)
+**Database:** MongoDB Atlas
 
-**Infrastructure**
-- GitHub Codespaces (Cloud IDE)
-- GitHub (Version control)
+**Hosting:** Vercel (frontend and backend as separate projects)
+
+**Testing:** pytest, mongomock-motor
 
 ## Architecture
 
-FastAPI App
-↓
-Pydantic Models (Validation)
-↓
-Motor AsyncClient
-↓
-MongoDB Atlas (Cloud)
+```
+React (Vercel) ──HTTPS + Bearer token──▶ FastAPI (Vercel Functions)
+                                            ├── MongoDB Atlas (users, entries)
+                                            └── Claude API (reflections, optional)
+```
 
 ## Phase Progress
 
@@ -176,31 +96,37 @@ MongoDB Atlas (Cloud)
 - Implemented retrieve endpoint
 - Data persistence working!
 
-**Phase 3: JWT Auth + React Frontend** (In progress)
+**Phase 3: JWT Auth + React Frontend** ✅
 - Signup and login endpoints with JWT access and refresh tokens ✅
 - Passwords hashed with bcrypt ✅
 - CORS enabled so the browser can call the API ✅
 - React (Vite) frontend with Login and Signup pages ✅
 - Signup and login tested end to end ✅
-- Save the token in the browser after login (in progress)
-- Deploy the frontend and connect it to the Railway backend
+- Token saved in the browser after login ✅
+- Frontend and backend deployed on Vercel ✅
 
-**Phase 3b: N8N Automation** (Coming)
+**Phase 4: Dashboard + AI** ✅
+- Daily check-in form, mood ribbon, stats and history
+- Entries secured per user with JWT
+- Claude-powered reflections with a built-in fallback
+- Backend test suite
+
+**Phase 5: N8N Automation** (Coming)
 - Workflow automation
 - Scheduled tasks
 - Data enrichment
 
-**Phase 4: Agentic AI** (Coming)
+**Phase 6: Agentic AI** (Coming)
 - AI agents
 - Intelligent insights
 - MCP tool integration
 
-**Phase 5: Testing** (Coming)
+**Phase 7: More testing** (Coming)
 - Unit tests with Pytest
 - Integration tests
 - API testing
 
-**Phase 6: Deployment** (Coming)
+**Phase 8: Production hardening** (Coming)
 - Docker containerization
 - Cloud deployment (GCP/Azure)
 - Production setup
@@ -209,7 +135,7 @@ MongoDB Atlas (Cloud)
 
 ```bash
 # Install dependencies
-pip install fastapi uvicorn motor pymongo pydantic
+pip install -r requirements.txt
 
 # Start server
 cd backend
@@ -227,32 +153,41 @@ npm install
 npm run dev
 ```
 
-The API URL is currently set inside `frontend/src/components/Login.jsx` and `Signup.jsx`. Change it to point at your backend.
+The frontend reads the backend address from `VITE_API_URL`. For local development, create `frontend/.env` with `VITE_API_URL=http://localhost:8000` (this is also the default).
 
 ## Environment Variables
 
-Create a `.env` file in `backend/` (not in version control):
+Backend (`backend/.env` locally, or Vercel project settings):
 
 ```
-MONGO_URL=mongodb+srv://username:password@cluster.mongodb.net/?appName=Cluster0
+MONGO_URL=mongodb+srv://username:password@cluster.mongodb.net/
 SECRET_KEY=a-long-random-string-for-signing-jwts
+ANTHROPIC_API_KEY=sk-ant-...        # optional: enables Claude reflections
+CLAUDE_MODEL=claude-haiku-5-5        # optional
+```
+
+Frontend (`frontend/.env` locally, or Vercel project settings):
+
+```
+VITE_API_URL=http://localhost:8000
 ```
 
 ## File Structure
 
 ```
 backend/
-└── app/
-    ├── main.py       (FastAPI app, endpoints, CORS)
-    ├── auth.py       (password hashing + JWT tokens)
-    ├── models.py     (Pydantic data models)
-    └── database.py   (MongoDB connection)
-frontend/
-└── src/
-    ├── App.jsx       (switches between Login and Signup)
-    └── components/
-        ├── Login.jsx
-        └── Signup.jsx
+├── app/
+│   ├── main.py       (routes)
+│   ├── auth.py       (passwords, JWT, current_user dependency)
+│   ├── database.py   (MongoDB queries, scoped per user)
+│   ├── insights.py   (Claude reflections + built-in fallback)
+│   └── models.py     (request validation)
+└── tests/test_api.py
+frontend/src/
+├── api.js            (fetch wrapper, token refresh)
+├── mood.js           (mood colours and date helpers)
+├── App.jsx
+└── components/       (AuthScreen, Dashboard, CheckInForm, MoodRibbon, InsightPanel, History)
 ```
 
 ## Author
@@ -269,5 +204,5 @@ MIT
 
 ---
 
-**Building in public. Phase 3 (auth + frontend) is in progress.**
+**Building in public. Phase 4 (dashboard + AI reflections) is live!**
 
