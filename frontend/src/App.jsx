@@ -1,20 +1,23 @@
-import { useState } from 'react'
-import Login from './components/Login'
-import Signup from './components/Signup'
+import { useEffect, useState } from 'react'
+import { api, setSessionExpiredHandler } from './api'
+import AuthScreen from './components/AuthScreen'
+import Dashboard from './components/Dashboard'
 
 function App() {
-  const [showLogin, setShowLogin] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(api.isLoggedIn())
 
-  return (
-    <main style={{ padding: '32px 16px', textAlign: 'center' }}>
-      <h1>Life Companion</h1>
-      {showLogin ? (
-        <Login onSwitchToSignup={() => setShowLogin(false)} />
-      ) : (
-        <Signup onSwitchToLogin={() => setShowLogin(true)} />
-      )}
-    </main>
-  )
+  useEffect(() => {
+    setSessionExpiredHandler(() => setLoggedIn(false))
+  }, [])
+
+  function logout() {
+    api.logout()
+    setLoggedIn(false)
+  }
+
+  return loggedIn
+    ? <Dashboard onLogout={logout} />
+    : <AuthScreen onAuthed={() => setLoggedIn(true)} />
 }
 
 export default App
